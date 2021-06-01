@@ -134,7 +134,9 @@ df_dias_cdt %>%
   labs(x = "Año",
        y = "Standard Deviation") +
   theme(legend.position = "none")
-```
+
+
+
 # La pandemia origino que los CDTs aumentaran en su volatilidad. Los de 120 y 180 dias
 # no presentan una variacion tan visible. Aun asi hay que esperar los cambios originados
 # por el Paro Nacional. Tome el rango desde 2018 hasta 20/05/2021. 
@@ -227,7 +229,9 @@ animate(q, height = 500, width = 800, fps = 30, duration = 10, end_pause = 60, r
         renderer = gifski_renderer())
 
 
-# CDT entre dias----------------------------------------------------------------
+
+
+# ------------------CDT entre dias----------------------------------------------
 df_entre_dias %>%
   group_by(descripcion, Year) %>% 
   summarise(avg_tasa = mean(tasa),
