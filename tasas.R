@@ -1,6 +1,6 @@
 pacman::p_load(tidyverse, scales, ggforce, ggtext, glue, extrafont, ggrepel, lubridate,
                tidytext, RColorBrewer, forecast, timetk, tidytext, gghighlight, ggthemes,
-               gifski, gganimate)
+               gifski, gganimate, hrbrthemes)
 
 #font_import()
 loadfonts(device = "win")
