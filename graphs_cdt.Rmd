@@ -1,0 +1,105 @@
+---
+title: "tasa final"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(scales)
+library(lubridate)
+library(ggrepel)
+library(RColorBrewer)
+library(extrafont)
+library(hrbrthemes)
+
+theme_set(theme_minimal())
+
+df <- readRDS(file = "data/df_dias_cdt_RDS")
+
+df_2020 <- df %>% 
+  filter(Year == "2020")
+```
+
+```{r}
+df_2020$Month <- factor(df_2020$Month,
+                   levels = c("Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                              "Jul", "Ago", "Sept", "Oct", "Nov", "Dic"))
+
+df_2020$descripcion <- factor(df_2020$descripcion,
+                         levels = c("A 30 Dias", "A 60 Dias", "A 90 Dias",
+                                    "A 120 Dias", "A 180 Dias", "A 360 Dias"))
+
+
+df %>% 
+  ggplot(aes(tasa, monto)) +
+  geom_point(alpha = 0.3) +
+  #geom_smooth(method = "lm") +
+  scale_y_log10() +
+  facet_wrap(~descripcion)
+```
+
+
+```{r}
+# Barplot por Entidad
+df_2020 %>% 
+  count(nombreentidad, descripcion) %>% 
+  mutate(nombreentidad = fct_reorder(nombreentidad, n)) %>% 
+  ggplot(aes(n, nombreentidad)) +
+  geom_col() +
+  facet_wrap(~descripcion)
+  
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+# Lineplot Avg Tasa in 2020
+df_2020 %>% 
+  group_by(Month, descripcion) %>% 
+  summarise(avg_tasa = mean(tasa),
+            avg_monto = mean(monto),
+            sd_tasa = sd(tasa),
+            .groups = "drop") %>% 
+  ggplot(aes(Month, avg_tasa, group = descripcion)) +
+  geom_line(aes(color = descripcion), size = 1.5) +
+  expand_limits(y = c(0, 6)) + 
+  scale_y_continuous(breaks = c(0:6, 1)) +
+  theme(legend.position = "top")
+
+# Lineplot Avg Monto 2020
+df_2020 %>% 
+  group_by(Month, descripcion) %>% 
+  summarise(avg_tasa = mean(tasa),
+            avg_monto = mean(monto),
+            sd_tasa = sd(tasa),
+            .groups = "drop") %>% 
+  ggplot(aes(Month, avg_monto, group = descripcion)) +
+  geom_line(aes(color = descripcion), size = 1.5) +
+  # expand_limits(y = c(0, 6)) + 
+  scale_y_log10(labels = comma) +
+  theme(legend.position = "top")
+```
+
+```{r}
+
+df_2020 %>% 
+  ggplot(aes(y = monto, x = Month, fill = Month)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  facet_wrap(~descripcion)
+  
+```
+
