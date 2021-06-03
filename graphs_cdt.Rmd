@@ -32,53 +32,56 @@ df_2020$Month <- factor(df_2020$Month,
 df_2020$descripcion <- factor(df_2020$descripcion,
                          levels = c("A 30 Dias", "A 60 Dias", "A 90 Dias",
                                     "A 120 Dias", "A 180 Dias", "A 360 Dias"))
+
+df_2020$Wday <- factor(df_2020$Wday,
+                       levels = c("Lunes", "Martes", "Miercoles", "Jueves",
+                                  "Viernes"))
 ```
 
-```{r}
-df %>% 
-  ggplot(aes(tasa, monto)) +
-  geom_point(alpha = 0.3) +
-  #geom_smooth(method = "lm") +
-  scale_y_log10() +
-  facet_wrap(~descripcion)
-```
-
+##---------------Barplots------------------------
 
 ```{r}
-# Barplot por Entidad
+# Barplot Entidad por Mes
 df_2020 %>% 
-  count(nombreentidad, descripcion) %>% 
-  mutate(nombreentidad = fct_reorder(nombreentidad, n)) %>% 
-  ggplot(aes(n, nombreentidad)) +
+  filter(fct_lump(nombreentidad, 5) != "Other") %>% 
+  group_by(nombreentidad, Month) %>%
+  summarise(count = n(),
+            .groups = "drop") %>% 
+  ggplot(aes(count, reorder_within(nombreentidad, count, Month))) +
+  geom_col(fill = "cadetblue4") +
+  scale_y_reordered() +
+  facet_wrap(~Month, scales = "free")
+
+
+# Barplot Entidad por Weekday
+df_2020 %>% 
+  filter(fct_lump(nombreentidad, 5) != "Other") %>% 
+  group_by(nombreentidad, Wday) %>%
+  summarise(count = n(),
+            .groups = "drop") %>% 
+  ggplot(aes(count, reorder_within(nombreentidad, count, Wday))) +
   geom_col() +
-  facet_wrap(~descripcion)
+  scale_y_reordered() +
+  facet_wrap(~Wday, scales = "free")
 
 
+
+# Barplot Entidad por Termino(descripcion)
 df_2020 %>% 
-  filter(fct_lump(nombreentidad, 10) != "Other") %>% 
+  filter(fct_lump(nombreentidad, 5) != "Other") %>% 
   group_by(nombreentidad, descripcion) %>% 
   summarise(count = n(),
             .groups = "drop") %>% 
   mutate(nombreentidad = reorder_within(nombreentidad, count, descripcion)) %>% 
-  ggplot(aes(count, nombreentidad)) +
+  ggplot(aes(count, nombreentidad, fill = descripcion)) +
   geom_col() +
   scale_y_reordered() +
-  facet_wrap(~descripcion, ncol = 1)
+  scale_fill_brewer(type = "qual", palette = 2) +
+  facet_wrap(~descripcion, scales = "free_y") +
+  theme(legend.position = "none")
 
 
 
-
-df_dias_cdt %>% 
-  filter(Year %in% c("2018", "2019", "2020"),
-         fct_lump(nombreentidad, 10) != "Other") %>%
-  group_by(nombreentidad, Year) %>% 
-  summarise(count = n(),
-            .groups = "drop") %>%
-  mutate(nombreentidad = reorder_within(nombreentidad, count, Year)) %>%
-  ggplot(aes(count, nombreentidad)) +
-  geom_col(fill = "lightcyan4", color = "grey90") +
-  scale_y_reordered() +
-  facet_wrap(~Year, ncol = 1, scales = "free_y")
   
 ```
 
@@ -89,7 +92,7 @@ df_dias_cdt %>%
 
 
 
-
+##---------------Lineplots------------------------
 
 ```{r}
 
