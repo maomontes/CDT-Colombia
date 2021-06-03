@@ -268,8 +268,9 @@ df_entre_dias %>%
   summarise(avg_monto = mean(monto),
             avg_tasa = mean(tasa),
             .groups = "drop") %>%
-  ggplot(aes(avg_monto, avg_tasa)) +
-  geom_point() +
+  ggplot(aes(avg_monto, avg_tasa, color = Year)) +
+  geom_point(size = 2) +
   scale_y_log10() +
   scale_x_log10(labels = comma) +
-  facet_wrap(~descripcion)
+  facet_wrap(~descripcion) +
+  theme(legend.position = "top")
