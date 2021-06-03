@@ -4,7 +4,7 @@ pacman::p_load(tidyverse, scales, ggforce, ggtext, glue, extrafont, ggrepel, lub
 
 #font_import()
 loadfonts(device = "win")
-theme_set(theme_minimal())
+theme_set(theme_ipsum_ps())
 
 # df <- read_csv("data/Tasas_de_interes_de_captacion_y_operaciones_del_mercado_monetario.csv") %>%
 #   janitor::clean_names() %>%
@@ -200,7 +200,7 @@ p <- df_dias_cdt %>%
   labs(x = "",
        y = "",
        fill = "Median Tasa de Interes",
-       title = "Media de Tasas de intereses. Periodo 2018-2020",
+       title = "Media de Tasas de intereses. Periodo 2008-2020",
        caption = "Fuente: Tasas de interes de captacion y operaciones del mercado monetario") +
   scale_y_discrete(limits = c("Viernes", "Jueves", "Miércoles", "Martes", "Lunes")) +
   scale_x_discrete(limits = c("Ene", "Feb", "Mar", "Abr", "May", "Jun",
@@ -229,6 +229,16 @@ animate(q, height = 500, width = 800, fps = 30, duration = 10, end_pause = 60, r
         renderer = gifski_renderer())
 
 
+# CDT dias por monto
+df_dias_cdt %>% 
+  group_by(Year, descripcion) %>% 
+  summarise(avg_monto = mean(monto),
+            .groups = "drop") %>% 
+  ggplot(aes(Year, avg_monto, group = descripcion)) +
+  geom_line(aes(color = descripcion), size = 1.5, alpha = 0.8) +
+  scale_color_brewer(type = "qual", palette = 2) +
+  scale_y_continuous(labels = comma)
+  
 
 
 # ------------------CDT entre dias----------------------------------------------
@@ -241,3 +251,25 @@ df_entre_dias %>%
   expand_limits(y = 0) +
   facet_wrap(~descripcion) + 
   theme(legend.position = "top")
+
+
+df_entre_dias %>% 
+  group_by(Year, descripcion) %>% 
+  summarise(avg_monto = mean(monto),
+            avg_tasa = mean(tasa),
+            .groups = "drop") %>% 
+  ggplot(aes(Year, avg_monto, group = descripcion)) +
+  geom_line(aes(color = descripcion), size = 1.5, alpha = 0.8) +
+  scale_color_brewer(type = "qual", palette = 2) +
+  scale_y_log10(labels = comma)
+
+df_entre_dias %>% 
+  group_by(Year, descripcion) %>%
+  summarise(avg_monto = mean(monto),
+            avg_tasa = mean(tasa),
+            .groups = "drop") %>%
+  ggplot(aes(avg_monto, avg_tasa)) +
+  geom_point() +
+  scale_y_log10() +
+  scale_x_log10(labels = comma) +
+  facet_wrap(~descripcion)
