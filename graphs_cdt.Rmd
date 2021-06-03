@@ -9,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(tidytext)
 library(scales)
 library(lubridate)
 library(ggrepel)
@@ -22,9 +23,8 @@ df <- readRDS(file = "data/df_dias_cdt_RDS")
 
 df_2020 <- df %>% 
   filter(Year == "2020")
-```
 
-```{r}
+
 df_2020$Month <- factor(df_2020$Month,
                    levels = c("Ene", "Feb", "Mar", "Abr", "May", "Jun",
                               "Jul", "Ago", "Sept", "Oct", "Nov", "Dic"))
@@ -32,8 +32,9 @@ df_2020$Month <- factor(df_2020$Month,
 df_2020$descripcion <- factor(df_2020$descripcion,
                          levels = c("A 30 Dias", "A 60 Dias", "A 90 Dias",
                                     "A 120 Dias", "A 180 Dias", "A 360 Dias"))
+```
 
-
+```{r}
 df %>% 
   ggplot(aes(tasa, monto)) +
   geom_point(alpha = 0.3) +
@@ -51,6 +52,33 @@ df_2020 %>%
   ggplot(aes(n, nombreentidad)) +
   geom_col() +
   facet_wrap(~descripcion)
+
+
+df_2020 %>% 
+  filter(fct_lump(nombreentidad, 10) != "Other") %>% 
+  group_by(nombreentidad, descripcion) %>% 
+  summarise(count = n(),
+            .groups = "drop") %>% 
+  mutate(nombreentidad = reorder_within(nombreentidad, count, descripcion)) %>% 
+  ggplot(aes(count, nombreentidad)) +
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~descripcion, ncol = 1)
+
+
+
+
+df_dias_cdt %>% 
+  filter(Year %in% c("2018", "2019", "2020"),
+         fct_lump(nombreentidad, 10) != "Other") %>%
+  group_by(nombreentidad, Year) %>% 
+  summarise(count = n(),
+            .groups = "drop") %>%
+  mutate(nombreentidad = reorder_within(nombreentidad, count, Year)) %>%
+  ggplot(aes(count, nombreentidad)) +
+  geom_col(fill = "lightcyan4", color = "grey90") +
+  scale_y_reordered() +
+  facet_wrap(~Year, ncol = 1, scales = "free_y")
   
 ```
 
