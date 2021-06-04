@@ -16,6 +16,7 @@ library(ggrepel)
 library(RColorBrewer)
 library(extrafont)
 library(hrbrthemes)
+library(BiocManager)
 
 theme_set(theme_minimal())
 
@@ -34,23 +35,26 @@ df_2020$descripcion <- factor(df_2020$descripcion,
                                     "A 120 Dias", "A 180 Dias", "A 360 Dias"))
 
 df_2020$Wday <- factor(df_2020$Wday,
-                       levels = c("Lunes", "Martes", "Miercoles", "Jueves",
+                       levels = c("Lunes", "Martes", "Miércoles", "Jueves",
                                   "Viernes"))
+
+
+df_2019 <- df |> 
+  filter(Year == "2019")
 ```
 
-##---------------Barplots------------------------
-
+---------------Barplots------------------------
 ```{r}
 # Barplot Entidad por Mes
 df_2020 %>% 
-  filter(fct_lump(nombreentidad, 5) != "Other") %>% 
+  filter(fct_lump(nombreentidad, 5) != "Other") |> 
   group_by(nombreentidad, Month) %>%
   summarise(count = n(),
             .groups = "drop") %>% 
   ggplot(aes(count, reorder_within(nombreentidad, count, Month))) +
-  geom_col(fill = "cadetblue4") +
+  geom_col(fill = "cadetblue4", width = 0.5) +
   scale_y_reordered() +
-  facet_wrap(~Month, scales = "free")
+  facet_wrap(~Month, scales = "free_y")
 
 
 # Barplot Entidad por Weekday
@@ -60,10 +64,9 @@ df_2020 %>%
   summarise(count = n(),
             .groups = "drop") %>% 
   ggplot(aes(count, reorder_within(nombreentidad, count, Wday))) +
-  geom_col() +
+  geom_col(width = 0.5) +
   scale_y_reordered() +
   facet_wrap(~Wday, scales = "free")
-
 
 
 # Barplot Entidad por Termino(descripcion)
@@ -80,20 +83,30 @@ df_2020 %>%
   facet_wrap(~descripcion, scales = "free_y") +
   theme(legend.position = "none")
 
-
-
-  
 ```
 
 
 
+Histograms of Monto and Tasa
+```{r}
+df_2020 |>
+  ggplot(aes(monto, fill = Wday)) +
+  geom_histogram(show.legend = FALSE) +
+  geom_vline(xintercept = mean(df_2020$monto), linetype = 2, alpha = 0.4) +
+  scale_x_log10() +
+  facet_wrap(~Wday)
+
+df_2020 |>
+  ggplot(aes(tasa, fill = Wday)) +
+  geom_histogram(show.legend = FALSE) +
+  geom_vline(xintercept = mean(df_2020$tasa), linetype = 2, alpha = 0.4) +
+  scale_fill_brewer(palette = "Dark2", type = "qual") +
+  facet_wrap(~Wday)
+```
 
 
 
-
-
-##---------------Lineplots------------------------
-
+---------------Lineplots------------------------
 ```{r}
 
 # Lineplot Avg Tasa in 2020
@@ -123,6 +136,8 @@ df_2020 %>%
   theme(legend.position = "top")
 ```
 
+
+Boxplots
 ```{r}
 
 df_2020 %>% 
@@ -130,6 +145,20 @@ df_2020 %>%
   geom_boxplot() +
   scale_y_log10() +
   theme(legend.position = "none") +
+  facet_wrap(~descripcion)
+```
+
+
+Lag by Date
+```{r}
+df_2020 |>
+  arrange(fechacorte) |>
+  group_by(fechacorte, nombreentidad) |> 
+  mutate(lag_tasa = tasa - lag(tasa, n =1, na.rm = T),
+         lag_monto = monto - lag(monto, n = 1)) |>
+  ungroup() |>
+  ggplot(aes(fechacorte, lag_tasa)) +
+  geom_point(size = 0.5, alpha = 0.4) +
   facet_wrap(~descripcion)
   
 ```
