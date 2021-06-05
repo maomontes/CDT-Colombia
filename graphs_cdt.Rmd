@@ -22,25 +22,31 @@ theme_set(theme_minimal())
 
 df <- readRDS(file = "data/df_dias_cdt_RDS")
 
-df_2020 <- df %>% 
-  filter(Year == "2020")
-
-
-df_2020$Month <- factor(df_2020$Month,
+df$Month <- factor(df$Month,
                    levels = c("Ene", "Feb", "Mar", "Abr", "May", "Jun",
                               "Jul", "Ago", "Sept", "Oct", "Nov", "Dic"))
 
-df_2020$descripcion <- factor(df_2020$descripcion,
+df$descripcion <- factor(df$descripcion,
                          levels = c("A 30 Dias", "A 60 Dias", "A 90 Dias",
                                     "A 120 Dias", "A 180 Dias", "A 360 Dias"))
 
-df_2020$Wday <- factor(df_2020$Wday,
+df$Wday <- factor(df$Wday,
                        levels = c("Lunes", "Martes", "Miércoles", "Jueves",
                                   "Viernes"))
 
+df_2020 <- df %>% 
+  filter(Year == "2020") %>% 
+  arrange(fechacorte)
+
 
 df_2019 <- df |> 
-  filter(Year == "2019")
+  filter(Year == "2019") %>% 
+  arrange(fechacorte)
+
+
+df_2021 <- df %>% 
+  filter(Year == "2021") %>% 
+  arrange(fechacorte)
 ```
 
 ---------------Barplots------------------------
@@ -141,9 +147,27 @@ Boxplots
 ```{r}
 
 df_2020 %>% 
-  ggplot(aes(y = monto, x = Month, fill = Month)) +
+  ggplot(aes(y = tasa, x = Month, fill = Month)) +
   geom_boxplot() +
-  scale_y_log10() +
+  #scale_y_log10() +
+  theme(legend.position = "none") +
+  labs(title = "2020") +
+  facet_wrap(~descripcion)
+
+df_2019 %>% 
+  ggplot(aes(y = tasa, x = Month, fill = Month)) +
+  geom_boxplot() +
+  #scale_y_log10() +
+  labs(title = "2019") +
+  theme(legend.position = "none") +
+  facet_wrap(~descripcion)
+
+
+df_2021 %>% 
+  ggplot(aes(y = tasa, x = Month, fill = Month)) +
+  geom_boxplot() +
+  #scale_y_log10() +
+  labs(title = "2021") +
   theme(legend.position = "none") +
   facet_wrap(~descripcion)
 ```
@@ -152,7 +176,6 @@ df_2020 %>%
 Lag by Date
 ```{r}
 df_2020 |>
-  arrange(fechacorte) |>
   group_by(fechacorte, nombreentidad) |> 
   mutate(lag_tasa = tasa - lag(tasa, n =1, na.rm = T),
          lag_monto = monto - lag(monto, n = 1)) |>
@@ -160,6 +183,88 @@ df_2020 |>
   ggplot(aes(fechacorte, lag_tasa)) +
   geom_point(size = 0.5, alpha = 0.4) +
   facet_wrap(~descripcion)
-  
+
+#Bancolombia
+df_2020 %>% 
+  filter(str_detect(nombreentidad, "Bancolombia")) %>% 
+  group_by(fechacorte, descripcion) %>% 
+  summarise(lag_tasa = tasa - lag(tasa, n = 1, order_by = descripcion)) %>%
+  ungroup()
+
+```
+
+
+
+Scatterplots comparing 2019-2020
+
+```{r}
+# 
+df_2020 %>% 
+  select(-Year:-Wday) %>% 
+  group_by(nombreentidad, descripcion) %>% 
+  summarise(avg_tasa = mean(tasa),
+            avg_monto = mean(monto),
+            .groups = "drop") %>% 
+  ggplot(aes(avg_tasa, avg_monto)) +
+  geom_point(aes(color = descripcion), size = 3.5) +
+  geom_vline(xintercept = mean(df_2020$tasa), alpha = 0.3) +
+  geom_hline(yintercept = mean(df_2020$monto), alpha = 0.3) +
+  scale_y_log10(labels = comma) +
+  scale_x_continuous(breaks = c(0:7, 1)) +
+  expand_limits(x = c(0, 7)) +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+    labs(x = "Promedio Tasa de Captación por Entidad",
+       y = "Promedio Monto en Pesos",
+       title = "Relación Tasa de Captacion y Monto de los CDT en Colombia",
+       subtitle = "Periodo 2020",
+       caption = "Fuente: Tasas de interes de captacion y operaciones del mercado monetario. datos.gov.co") +
+  theme(legend.position = "top",
+        legend.title = element_blank()) 
+
+
+
+df_2019$descripcion <- factor(df_2019$descripcion,
+                         levels = c("A 30 Dias", "A 60 Dias", "A 90 Dias",
+                                    "A 120 Dias", "A 180 Dias", "A 360 Dias"))
+
+
+df_2019 %>% 
+  select(-Year:-Wday) %>% 
+  group_by(nombreentidad, descripcion) %>% 
+  summarise(avg_tasa = mean(tasa),
+            avg_monto = mean(monto),
+            .groups = "drop") %>% 
+  ggplot(aes(avg_tasa, avg_monto)) +
+  geom_point(aes(color = descripcion), size = 3.5) +
+  geom_vline(xintercept = mean(df_2019$tasa), alpha = 0.3) +
+  geom_hline(yintercept = mean(df_2019$monto), alpha = 0.3) +
+  scale_y_log10(labels = comma) +
+  scale_x_continuous(breaks = c(0:7, 1)) +
+  expand_limits(x = c(0, 7)) +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  labs(x = "Promedio Tasa de Captación por Entidad",
+       y = "Promedio Monto en Pesos",
+       title = "Relación Tasa de Captacion y Monto de los CDT en Colombia",
+       subtitle = "Periodo 2019",
+       caption = "Fuente: Tasas de interes de captacion y operaciones del mercado monetario. datos.gov.co") +
+  theme(legend.position = "top",
+        legend.title = element_blank())
+```
+
+
+
+
+
+```{r}
+clusters <- sample(unique(df_2020$descripcion), size = 6, replace = F)
+
+cluster_sample <- df[df$descripcion %in% clusters, ]
+
+table(cluster_sample$descripcion)
+
+
+plot(df_2020$tasa~ df_2020$monto, data = df_2020)
+with(df_2020, text(df_2020$tasa ~ df_2020$monto,
+                   labels = df_2020$nombreentidad, pos = 4))
 ```
 
