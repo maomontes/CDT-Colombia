@@ -142,6 +142,17 @@ df_2020 %>%
   # expand_limits(y = c(0, 6)) + 
   scale_y_log10(labels = comma) +
   theme(legend.position = "top")
+
+
+#Test for shiny
+
+df_2020 %>% 
+  group_by(Month, descripcion) %>% 
+  summarise(avg_tasa = mean(tasa),
+            .groups = "drop") %>% 
+  ggplot(aes(Month, avg_tasa, group = descripcion, color = descripcion)) +
+  geom_point() +
+  geom_line()
 ```
 
 
